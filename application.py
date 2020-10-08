@@ -24,6 +24,12 @@ def index():
         else:
             soilStatus = "Water detected"
 
+        dht11Pin = dht11.DHT11(pin=17)
+        dhtresult = dht11Pin.read()
+        temperature = dhtresult.temperature
+        farenheit = (dhtresult.temperature* 9/5) + 32
+        humidity = dhtresult.humidity
+
         #activates pump on button press
         pumpTime = int(request.form.get("pumpTime"))
         pump_pin = 23
@@ -33,7 +39,7 @@ def index():
         GPIO.output(pump_pin, GPIO.HIGH)
 
 
-        return render_template("index.html", soilStatus=soilStatus)
+        return redirect(url_for("index"))
 
     elif request.method == "GET":
         #GPIO Setup
