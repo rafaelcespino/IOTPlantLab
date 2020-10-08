@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Plant Soil Control
+{% endblock %}
+
+{% block body %}
+<h1>Soil Moisture Status: {{ soilStatus }}</h1>
+<br>
+<h1>Temperature: {{ temperature }} °C / {{ farenheit }} °F</h1>
+<br>
+
+<h1>Humidity: {{ humidity }}%</h1>
+
+<form action="{{url_for('index')}}" method="POST">
+    <select class="custom-select" name="pumpTime" id="pumpTime">
+        <option selected>How many seconds would you like to activate the pump for?</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+      <button input type="submit" name = "submit_button" value="enablePump" class="btn btn-primary">Enable Pump</button>
+</form>
+
+{% endblock %}
