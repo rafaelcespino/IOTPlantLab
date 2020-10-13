@@ -14,21 +14,7 @@ def index():
 
     if request.method == "POST":
         
-        soilSensorPin = 21
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(soilSensorPin, GPIO.IN)
-
-        #Detects soil moisture
-        if GPIO.input(soilSensorPin):
-            soilStatus = "No water detected"
-        else:
-            soilStatus = "Water detected"
-
-        dht11Pin = dht11.DHT11(pin=17)
-        dhtresult = dht11Pin.read()
-        temperature = dhtresult.temperature
-        farenheit = (dhtresult.temperature* 9/5) + 32
-        humidity = dhtresult.humidity
 
         #activates pump on button press
         pumpTime = int(request.form.get("pumpTime"))
@@ -38,7 +24,7 @@ def index():
         time.sleep(pumpTime)
         GPIO.output(pump_pin, GPIO.HIGH)
 
-
+        #Redirects to index using GET request after activating pump
         return redirect(url_for("index"))
 
     elif request.method == "GET":
@@ -49,10 +35,17 @@ def index():
         GPIO.setup(soilSensorPin, GPIO.IN)
         dhtresult = dht11Pin.read()
 
+        #Displays temp and humidity if the input is valid
+        if dhtresult.is_valid():
+            temperature = str(dhtresult.temperature)[:5] + "°C /"
+            farenheit = str((dhtresult.temperature* 9/5) + 32)[:5] + "°F"
+            humidity = str(dhtresult.humidity) + "%"
 
-        temperature = dhtresult.temperature
-        farenheit = (dhtresult.temperature* 9/5) + 32
-        humidity = dhtresult.humidity
+        #Displays error message when the input is invalid
+        else:
+            temperature = "Sensor error, please refresh page"
+            farenheit = " "
+            humidity = "Sensor error, please refresh page"
 
         #Detects soil moisture
         if GPIO.input(soilSensorPin):
@@ -61,7 +54,7 @@ def index():
             soilStatus = "Water detected"
 
     
-
+    #renders HTML template on GET request with the calculated values 
     return render_template("index.html", soilStatus=soilStatus, temperature=temperature, humidity=humidity, farenheit=farenheit)
 
 if __name__ == "__main__":
