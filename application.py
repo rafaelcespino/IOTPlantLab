@@ -3,28 +3,51 @@ import RPi.GPIO as GPIO
 import time
 import sys
 import dht11
+import threading
 
-app=Flask(__name__)
+
 GPIO.setwarnings(False)
 GPIO.cleanup()
 
+def waterLoop(delay):
+    #while(True):
+        #pumpTime = 5
+        #pump_pin = 23
+        #GPIO.setup(23, GPIO.OUT)
+        #GPIO.output(pump_pin, GPIO.LOW)
+        #time.sleep(pumpTime)
+        #GPIO.output(pump_pin, GPIO.HIGH)
+        #secondsDelay = delay * 3600
+    while(True):
+        print("Delay finished")
+        time.sleep(delay)
+
+app=Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
 
     if request.method == "POST":
-        
         GPIO.setmode(GPIO.BCM)
+        #activates pump if user decided to activate pump once
+        if request.form["option"] == "pump":
+            pumpTime = int(request.form.get("pumpTime"))
+            pump_pin = 23
+            GPIO.setup(23, GPIO.OUT)
+            GPIO.output(pump_pin, GPIO.LOW)
+            time.sleep(pumpTime)
+            GPIO.output(pump_pin, GPIO.HIGH)
 
-        #activates pump on button press
-        pumpTime = int(request.form.get("pumpTime"))
-        pump_pin = 23
-        GPIO.setup(23, GPIO.OUT)
-        GPIO.output(pump_pin, GPIO.LOW)
-        time.sleep(pumpTime)
-        GPIO.output(pump_pin, GPIO.HIGH)
+        #creates a thread to run watering schedule if the user decided to start a schedule
+        elif request.form["option"] == "schedule":
+            print("starting thread")
+            delay = request.form.get("scheduleDelay")
+            t = threading.Thread(target=waterLoop, name="running schedule", args=(delay))
+            t.daemon = True #thread will be closed when the server closes as well 
+            t.start()
 
-        #Redirects to index using GET request after activating pump
+
+        #Redirects to index using GET request after activating pump or starting schedule
         return redirect(url_for("index"))
 
     elif request.method == "GET":
