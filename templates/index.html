@@ -11,8 +11,10 @@
 <br>
 
 <h1>Humidity: {{ humidity }}</h1>
+<h1>Outdoor Weather: {{ condition }}</h1>
 
-<form action="{{url_for('index')}}" method="POST">
+<form action="{{url_for('water')}}" method="POST">
+    <h2>Water Once:</h2>
     <h3>How many seconds would you like to activate the pump for?</h3>
     <select class="custom-select" name="pumpTime" id="pumpTime">
         <option value="1">1</option>
@@ -21,14 +23,14 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <input type="hidden" name = "option" id="pump">
+      
       <button input type="submit" name = "submit_button" value="enablePump" class="btn btn-primary">Enable Pump</button>
 </form>
 
-<form action="{{url_for('index')}}" method="POST">
+<form action="{{url_for('schedule')}}" method="POST">
     <br>
-    <h2>Set up a routine schedule</h2>
-    <h3>How many hours to wait between each watering?</h3>
+    <h2>Set up a routine schedule:</h2>
+    <h3>How much time to wait between each watering?</h3>
     <select class="custom-select" name="scheduleDelay" id="scheduleDelay">
         <option value="1">1</option>
         <option value="2">2</option>
@@ -36,8 +38,26 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <input type="hidden" name = "option" id="schedule">
+
+    <select class="custom-select" name="timeType" id="timeType">
+        <option value="seconds">seconds</option>
+        <option value="minutes">minutes</option>
+        <option value="hours">hours</option>
+    </select>
+
+    <h3>How long to activate the pump each time?</h3>
+      <select class="custom-select" name="pumpTime" id="pumpTime">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    <h3>How many iterations?</h3>
+    <input type="number" name="iterations" id="iterations">
+      
       <button input type="submit" name = "submit_button" value="startSchedule" class="btn btn-primary">Set Schedule</button>
 </form>
+
 
 {% endblock %}
