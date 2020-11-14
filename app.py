@@ -1,4 +1,6 @@
 from flask import Flask, session, render_template, request, redirect, url_for
+from flask_mqtt import Mqtt
+import paho.mqtt.client as mqtt
 import RPi.GPIO as GPIO
 import time
 import sys
@@ -11,14 +13,6 @@ GPIO.setwarnings(False)
 GPIO.cleanup()
 
 def waterLoop(delay, timeType, pumpTime, iterations):
-    #while(True):
-        #pumpTime = 5
-        #pump_pin = 23
-        #GPIO.setup(23, GPIO.OUT)
-        #GPIO.output(pump_pin, GPIO.LOW)
-        #time.sleep(pumpTime)
-        #GPIO.output(pump_pin, GPIO.HIGH)
-        #secondsDelay = delay * 3600
     for i in range(int(iterations)):
         print("Delay finished")
         GPIO.setmode(GPIO.BCM)
@@ -34,7 +28,24 @@ def waterLoop(delay, timeType, pumpTime, iterations):
             delay*3600
         time.sleep(int(delay))
 
-app=Flask(__name__)
+
+#Flask and MQTT initialization
+app = Flask(__name__)
+
+messageArray = ["", "", "", ""]
+
+#subscribe to topics and store in global variables
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code "+str(rc))
+    client.subscribe("IOTWateringLab/telemetry")
+
+def on_message(client, userdata, msg):
+    payload = msg.payload.decode("utf-8")
+    print(msg.topic+" "+payload)
+    global messageArray
+    messageArray = payload.split(",")
+
+    
 
 @app.route("/", methods=["GET"])
 def index():
@@ -112,30 +123,14 @@ def index():
         }
     condition = switcher.get(weatherConditionId, "Invalid data.")
     
+    global messageArray
+    temperature = "{} °C /".format(messageArray[0])
+    humidity = messageArray[2]
+    farenheit = "{} °F".format(messageArray[1])
+    soilStatus = messageArray[3]
+    
 
-    soilSensorPin = 21
-    dht11Pin = dht11.DHT11(pin=17)
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(soilSensorPin, GPIO.IN)
-    dhtresult = dht11Pin.read()
-
-    #Displays temp and humidity if the input is valid
-    if dhtresult.is_valid():
-        temperature = str(dhtresult.temperature)[:5] + "°C /"
-        farenheit = str((dhtresult.temperature* 9/5) + 32)[:5] + "°F"
-        humidity = str(dhtresult.humidity) + "%"
-
-    #Displays error message when the input is invalid
-    else:
-        temperature = "Sensor error, please refresh page"
-        farenheit = " "
-        humidity = "Sensor error, please refresh page"
-
-    #Detects soil moisture
-    if GPIO.input(soilSensorPin):
-        soilStatus = "No water detected"
-    else:
-        soilStatus = "Water detected"
+    
 
     
     #renders HTML template on GET request with the calculated values 
@@ -173,4 +168,10 @@ def schedule():
     
     
 if __name__ == "__main__":
-   app.run(host='0.0.0.0', port=80, debug=True)
+    client = mqtt.Client()
+    #client.username_pw_set(username, password)
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect('test.mosquitto.org')
+    client.loop_start()
+    app.run(host='0.0.0.0', port=80, debug=False)
